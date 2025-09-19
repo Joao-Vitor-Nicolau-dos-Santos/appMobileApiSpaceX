@@ -10,19 +10,28 @@ import {
 
 export default class Cadastro extends Component {
   state = {
+    nome: "",
     email: "",
     password: "",
+    telefone: "",
+    CPF: "",
+    curso: "",
+
   };
 
   handleCadastro = async () => {
-    const { email, password } = this.state;
+    const { email, password, nome, telefone, CPF, curso } = this.state;
     if (!email || !password) {
       alert("Preencha todos os campos!");
       return;
     }
     const user = {
+      nome,
       email,
       password,
+      telefone,
+      CPF,
+      curso,
     };
 
     await AsyncStorage.setItem("user", JSON.stringify(user));
@@ -32,6 +41,12 @@ export default class Cadastro extends Component {
   render() {
     return (
       <View style={styles.container}>
+        <TextInput
+          style={styles.input}
+          placeholder="Nome"
+          value={this.state.nome}
+          onChangeText={(nome) => this.setState({ nome })}
+        />
         <TextInput
           style={styles.input}
           placeholder="E-mail"
@@ -45,6 +60,26 @@ export default class Cadastro extends Component {
           secureTextEntry={true}
           onChangeText={(password) => this.setState({ password })}
         />
+        <TextInput
+          style={styles.input}
+          placeholder="Telefone"
+          value={this.state.telefone}
+          onChangeText={(telefone) =>
+             this.setState({ telefone })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="CPF"
+          value={this.state.CPF}
+          onChangeText={(CPF) => this.setState({ CPF })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Curso"
+          value={this.state.curso}
+          onChangeText={(curso) => this.setState({ curso })}
+        />
+        
         <TouchableOpacity style={styles.button} onPress={this.handleCadastro}>
           <Text style={styles.buttonText}>Cadastrar</Text>
         </TouchableOpacity>
