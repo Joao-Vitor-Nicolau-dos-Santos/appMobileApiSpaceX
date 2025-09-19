@@ -122,7 +122,13 @@
 // }
 //#endregion
 import React, { Component } from "react";
-import { ActivityIndicator, Keyboard, View, StyleSheet } from "react-native"; // 👈 Adicione View e StyleSheet
+import {
+  ActivityIndicator,
+  Keyboard,
+  View,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import Icon from "@expo/vector-icons/MaterialIcons";
 import api from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -140,52 +146,104 @@ import {
   ProfileButtonText,
 } from "../styles";
 
+const STORAGE_KEY = "@launches:saved";
+
 export default class Main extends Component {
   state = {
-    launches: [],
+    launches: [], // só os lançamentos que o usuário adicionou
     loading: false,
     searchTerm: "",
   };
 
   async componentDidMount() {
-    this.loadLaunches();
+    await this.loadSavedLaunches();
   }
 
-  loadLaunches = async () => {
+  loadSavedLaunches = async () => {
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const launches = JSON.parse(raw);
+        this.setState({ launches });
+      }
+    } catch (err) {
+      console.warn("Erro ao carregar lançamentos salvos:", err);
+    }
+  };
+
+  saveLaunchesToStorage = async (launches) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(launches));
+    } catch (err) {
+      console.warn("Erro ao salvar lançamentos:", err);
+    }
+  };
+
+  handleAddLaunch = async () => {
+    const { searchTerm, launches } = this.state;
+    const term = searchTerm.trim();
+    if (!term) {
+      return Alert.alert("Aviso", "Digite o nome do lançamento para adicionar.");
+    }
+
     this.setState({ loading: true });
     try {
-      const response = await api.get("/launches", {
-        params: { sort: "date_unix", order: "desc", limit: 10 },
-      });
-      this.setState({ launches: response.data });
-    } catch (error) {
-      alert("Erro ao carregar lançamentos.");
+      // Tenta buscar na API por nome (usa POST /launches/query)
+      const body = {
+        query: { name: { $regex: `^${term}$`, $options: "i" } }, // correspondência exata/insensível a maiúsculas
+        options: { sort: { date_unix: -1 }, limit: 5 },
+      };
+
+      const res = await api.post("/launches/query", body);
+
+      const docs = res?.data?.docs || [];
+      if (docs.length === 0) {
+        // Não encontrou: avisa e não adiciona
+        Alert.alert("Aviso", "Este lançamento não existe");
+        this.setState({ loading: false });
+        return;
+      }
+
+      // Se encontrou múltiplos, escolhemos o primeiro (ou você pode abrir um modal para o usuário escolher)
+      const found = docs[0];
+
+      // Verifica duplicata (por id)
+      if (launches.find((l) => l.id === found.id)) {
+        Alert.alert("Já existe", "Esse lançamento já foi adicionado.");
+        this.setState({ loading: false });
+        return;
+      }
+
+      const newList = [found, ...launches];
+      this.setState({ launches: newList, searchTerm: "" });
+      await this.saveLaunchesToStorage(newList);
+      Keyboard.dismiss();
+    } catch (err) {
+      console.error("Erro ao buscar lançamento na API:", err);
+      Alert.alert("Erro", "Ocorreu um erro ao consultar a API. Tente novamente.");
     } finally {
       this.setState({ loading: false });
     }
   };
 
-  handleSearch = async () => {
-    const { searchTerm } = this.state;
-    if (!searchTerm.trim()) return;
-
-    this.setState({ loading: true });
-    try {
-      const response = await api.get("/launches/query", {
-        method: "POST",
-        data: {
-          query: {
-            name: { $regex: searchTerm, $options: "i" },
+  handleRemove = async (id) => {
+    Alert.alert(
+      "Remover",
+      "Deseja remover este lançamento?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Remover",
+          style: "destructive",
+          onPress: async () => {
+            const newList = this.state.launches.filter((l) => l.id !== id);
+            this.setState({ launches: newList });
+            await this.saveLaunchesToStorage(newList);
           },
-          options: { sort: { date_unix: -1 }, limit: 10 },
         },
-      });
-      this.setState({ launches: response.data.docs });
-    } catch (error) {
-      alert("Nenhum lançamento encontrado.");
-    } finally {
-      this.setState({ loading: false });
-    }
+      ],
+      { cancelable: true }
+    );
   };
 
   render() {
@@ -193,62 +251,65 @@ export default class Main extends Component {
 
     return (
       <Container style={localStyles.container}>
-        {/* Lista de lançamentos */}
+        {/* Lista só com os lançamentos adicionados */}
         <List
           data={launches}
-          keyExtractor={(item) => item.id}
-          onRefresh={this.loadLaunches}
+          keyExtractor={(item) => String(item.id)}
+          // recarrega do storage (não faz fetch global da API)
+          onRefresh={this.loadSavedLaunches}
           refreshing={loading}
           renderItem={({ item }) => (
             <LaunchItem>
-              {item.links.patch.small ? (
+              {item.links?.patch?.small ? (
                 <PatchImage source={{ uri: item.links.patch.small }} />
               ) : (
-                <PatchImage
-                  source={{ uri: "https://via.placeholder.com/64" }}
-                />
+                <PatchImage source={{ uri: "https://via.placeholder.com/64" }} />
               )}
+
               <MissionName>{item.name || "Sem nome"}</MissionName>
               <Details numberOfLines={2}>
                 {item.date_local} • {item.rocket} • {item.launchpad}
               </Details>
-              <ProfileButton
-                onPress={() => {
-                  this.props.navigation.navigate("user", { launch: item });
-                }}
-              >
-                <ProfileButtonText>Detalhes</ProfileButtonText>
-              </ProfileButton>
+
+              <View style={{ flexDirection: "row" }}>
+                <ProfileButton
+                  onPress={() => {
+                    this.props.navigation.navigate("user", { launch: item });
+                  }}
+                >
+                  <ProfileButtonText>Detalhes</ProfileButtonText>
+                </ProfileButton>
+
+                <ProfileButton
+                  onPress={() => this.handleRemove(item.id)}
+                  style={{ marginLeft: 8 }}
+                >
+                  <ProfileButtonText>Remover</ProfileButtonText>
+                </ProfileButton>
+              </View>
             </LaunchItem>
           )}
-          contentContainerStyle={{ paddingBottom: 80 }} // 👈 Dá espaço para o botão fixo
+          contentContainerStyle={{ paddingBottom: 120 }}
         />
 
-        {/* Formulário fixo no rodapé */}
         <View style={localStyles.footer}>
           <Form style={localStyles.form}>
             <Input
               autoCorrect={false}
               autoCapitalize="none"
-              placeholder="Buscar lançamento..."
+              placeholder="Adicionar lançamento pelo nome..."
               value={searchTerm}
               onChangeText={(text) => this.setState({ searchTerm: text })}
-              onSubmitEditing={this.handleSearch}
-              returnKeyType="search"
+              onSubmitEditing={this.handleAddLaunch}
+              returnKeyType="done"
             />
-            {/* <SubmitButton loading={loading} onPress={this.handleSearch}>
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Icon name="search" size={20} color="#fff" />
-              )}
-            </SubmitButton> */}
-            <SubmitButton loading={loading} onPress={this.handleSearch}>
+
+            <SubmitButton loading={loading} onPress={this.handleAddLaunch}>
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <View style={localStyles.searchIconContainer}>
-                  <Icon name="search" size={20} color="#fff" />
+                  <Icon name="add" size={20} color="#fff" />
                 </View>
               )}
             </SubmitButton>
@@ -261,14 +322,14 @@ export default class Main extends Component {
 
 const localStyles = StyleSheet.create({
   container: {
-    paddingBottom: 80, // Espaço para o footer
+    paddingBottom: 120, // espaço maior pro footer
   },
   footer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#0f0f0f", // Mesma cor do fundo
+    backgroundColor: "#0f0f0f",
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: "#333",
@@ -276,5 +337,8 @@ const localStyles = StyleSheet.create({
   form: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  searchIconContainer: {
+    paddingHorizontal: 10,
   },
 });
