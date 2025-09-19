@@ -1,3 +1,4 @@
+//#region Comentários INSANOS que o João fez
 // import React, { Component } from "react";
 // import { ActivityIndicator, Keyboard } from "react-native";
 // import Icon from "@expo/vector-icons/MaterialIcons";
@@ -119,7 +120,7 @@
 //     );
 //   }
 // }
-
+//#endregion
 import React, { Component } from "react";
 import { ActivityIndicator, Keyboard, View, StyleSheet } from "react-native"; // 👈 Adicione View e StyleSheet
 import Icon from "@expo/vector-icons/MaterialIcons";

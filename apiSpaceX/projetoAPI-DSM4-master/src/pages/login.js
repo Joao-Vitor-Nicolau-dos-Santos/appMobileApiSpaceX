@@ -10,7 +10,7 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [nome, setNome] = useState("");
   const [password, setPassword] = useState("");
   const navigation = useNavigation();
 
@@ -21,10 +21,10 @@ const Login = () => {
       return
     }
     const userJson = JSON.parse(user)
-    if(userJson.email === email && userJson.password === password){
+    if(userJson.nome === nome && userJson.password === password){
       navigation.navigate("main")
     }else{
-      alert("E-mail ou senha inválidos!")
+      alert("Usuário ou senha inválidos!")
     }
   };
 
@@ -36,9 +36,9 @@ const Login = () => {
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="E-mail"
-        value={email}
-        onChangeText={setEmail}
+        placeholder="Usúario (Nome)"
+        value={nome}
+        onChangeText={setNome}
       />
       <TextInput
         style={styles.input}
@@ -57,6 +57,7 @@ const Login = () => {
   );
 };
 
+//#region StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -85,5 +86,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
+//#endregion
 export default Login;
