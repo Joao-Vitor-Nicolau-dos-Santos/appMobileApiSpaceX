@@ -15,22 +15,22 @@ const Login = () => {
   const navigation = useNavigation();
 
   const handleLogin = async () => {
-    const user = await AsyncStorage.getItem("user")
-    if(!user){
-      alert("Nenhum usuário cadastro")
-      return
+    const user = await AsyncStorage.getItem("user");
+    if (!user) {
+      alert("Nenhum usuário cadastro");
+      return;
     }
-    const userJson = JSON.parse(user)
-    if(userJson.nome === nome && userJson.password === password){
-      navigation.navigate("main")
-    }else{
-      alert("Usuário ou senha inválidos!")
+    const userJson = JSON.parse(user);
+    if (userJson.nome === nome && userJson.password === password) {
+      navigation.navigate("main");
+    } else {
+      alert("Usuário ou senha inválidos!");
     }
   };
 
   const handleCadastro = () => {
-    navigation.navigate('cadastro')
-  }
+    navigation.navigate("cadastro");
+  };
 
   return (
     <View style={styles.container}>
@@ -39,6 +39,7 @@ const Login = () => {
         placeholder="Usúario (Nome)"
         value={nome}
         onChangeText={setNome}
+        placeholderTextColor="#ffffff8c" 
       />
       <TextInput
         style={styles.input}
@@ -46,6 +47,7 @@ const Login = () => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry={true}
+        placeholderTextColor="#ffffff8c" 
       />
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Entrar</Text>
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginVertical: 10,
     width: "80%",
-    color: "#ffffff8c",
+    color: "#ffffffff",
   },
   button: {
     backgroundColor: "#072336ff",

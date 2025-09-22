@@ -16,7 +16,6 @@ export default class Cadastro extends Component {
     telefone: "",
     CPF: "",
     curso: "",
-
   };
 
   handleCadastro = async () => {
@@ -46,12 +45,14 @@ export default class Cadastro extends Component {
           placeholder="Nome"
           value={this.state.nome}
           onChangeText={(nome) => this.setState({ nome })}
+          placeholderTextColor="#ffffff8c"
         />
         <TextInput
           style={styles.input}
           placeholder="E-mail"
           value={this.state.email}
           onChangeText={(email) => this.setState({ email })}
+          placeholderTextColor="#ffffff8c"
         />
         <TextInput
           style={styles.input}
@@ -59,27 +60,30 @@ export default class Cadastro extends Component {
           value={this.state.password}
           secureTextEntry={true}
           onChangeText={(password) => this.setState({ password })}
+          placeholderTextColor="#ffffff8c"
         />
         <TextInput
           style={styles.input}
           placeholder="Telefone"
           value={this.state.telefone}
-          onChangeText={(telefone) =>
-             this.setState({ telefone })}
+          onChangeText={(telefone) => this.setState({ telefone })}
+          placeholderTextColor="#ffffff8c"
         />
         <TextInput
           style={styles.input}
           placeholder="CPF"
           value={this.state.CPF}
           onChangeText={(CPF) => this.setState({ CPF })}
+          placeholderTextColor="#ffffff8c"
         />
         <TextInput
           style={styles.input}
           placeholder="Curso"
           value={this.state.curso}
           onChangeText={(curso) => this.setState({ curso })}
+          placeholderTextColor="#ffffff8c"
         />
-        
+
         <TouchableOpacity style={styles.button} onPress={this.handleCadastro}>
           <Text style={styles.buttonText}>Cadastrar</Text>
         </TouchableOpacity>
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginVertical: 10,
     width: "80%",
-    color: "#ffffff8c",
+    color: "#fff",
   },
   button: {
     backgroundColor: "#072336ff",
@@ -111,7 +115,6 @@ const styles = StyleSheet.create({
     width: "80%",
     alignItems: "center",
     marginVertical: 10,
-    
   },
   buttonText: {
     color: "#fff",
