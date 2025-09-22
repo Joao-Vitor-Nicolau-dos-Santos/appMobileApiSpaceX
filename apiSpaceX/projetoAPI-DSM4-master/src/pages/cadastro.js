@@ -20,7 +20,7 @@ export default class Cadastro extends Component {
 
   handleCadastro = async () => {
     const { email, password, nome, telefone, CPF, curso } = this.state;
-    if (!email || !password) {
+    if (!email || !password || !nome || !telefone || !CPF || !curso) {
       alert("Preencha todos os campos!");
       return;
     }
