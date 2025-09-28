@@ -17,6 +17,7 @@ export default function Routes() {
           headerStyle: {
             backgroundColor: '#072336ff',
           },
+          headerTintColor: '#fff',
           headerTitleStyle: {
             fontWeight: 'bold',
             color: '#fff',
